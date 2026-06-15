@@ -27,6 +27,8 @@ Do not write raw OCR, copied fragments, noisy transcripts, or unverified paste d
 8. Update Graphify when available.
 9. Produce a short action brief when the new knowledge implies work.
 
+YouTube channels can be auto-harvested into the inbox as transcript notes (`docs/youtube-ingestion.md`); they then flow through this same workflow.
+
 ## Note Shape
 
 Every durable note should contain:

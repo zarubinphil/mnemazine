@@ -122,6 +122,18 @@ It does not use private cookies or browser sessions by default. If a site needs 
 
 ![Site ingestion](docs/assets/screenshots/04-site-ingestion.svg)
 
+## YouTube Ingestion
+
+Mnemazine can ingest a YouTube channel and turn every video into a transcript note, then keep pulling new uploads automatically:
+
+```bash
+python3 scripts/kb-yt-harvest.py "https://www.youtube.com/@SomeChannel" --all --subscribe
+```
+
+It pulls subtitles first (near-zero cost) and falls back to local whisper when a video has no usable captions. Each video becomes one inbox note named `yt_<date>_<id>_<title>.md`. A subscribed channel is then polled by `scripts/kb-yt-watch.py` over RSS, harvesting only new uploads — optionally on a daily launchd schedule.
+
+It fetches public videos only and uses no cookies or account sessions by default. See [YouTube Ingestion](docs/youtube-ingestion.md).
+
 ## Knowledge Quality Contract
 
 The vault must contain final knowledge, not raw material.
@@ -212,6 +224,7 @@ That matters because a real memory must be reproducible. A note should be able t
 - [Architecture](docs/architecture.md)
 - [Token Economics](docs/token-economics.md)
 - [Website Ingestion](docs/site-ingestion.md)
+- [YouTube Ingestion](docs/youtube-ingestion.md)
 - [Obsidian Vault](docs/obsidian.md)
 - [Apple Vision OCR](docs/apple-vision.md)
 - [Graphify](docs/graphify.md)

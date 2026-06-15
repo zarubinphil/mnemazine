@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  kb-yt-watch — daily YouTube channel watcher for Mnemazine (launchd template).
+
+  This is a TEMPLATE. launchd needs absolute paths, so generate a concrete
+  plist locally (machine-specific paths stay out of the repo):
+
+    sed -e "s#__PYTHON__#$(command -v python3)#g" \
+        -e "s#__NODE_BIN__#$(dirname "$(command -v node)")#g" \
+        -e "s#__ROOT__#$PWD#g" \
+        -e "s#__INBOX__#$PWD/inbox#g" \
+        scripts/com.mnemazine.kb-yt-watch.plist.template \
+        > ~/Library/LaunchAgents/com.mnemazine.kb-yt-watch.plist
+    launchctl load ~/Library/LaunchAgents/com.mnemazine.kb-yt-watch.plist
+
+  Deactivate:
+    launchctl unload ~/Library/LaunchAgents/com.mnemazine.kb-yt-watch.plist
+
+  Runs daily at 09:00 in --harvest-only mode: harvests new videos into the
+  inbox but does NOT auto-study. Remove --harvest-only (and set
+  MNEMAZINE_STUDY_CMD) to study automatically.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.mnemazine.kb-yt-watch</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__PYTHON__</string>
+    <string>__ROOT__/scripts/kb-yt-watch.py</string>
+    <string>--harvest-only</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>9</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>__NODE_BIN__:/usr/local/bin:/usr/bin:/bin</string>
+    <key>MNEMAZINE_ROOT</key>
+    <string>__ROOT__</string>
+    <key>MNEMAZINE_INBOX</key>
+    <string>__INBOX__</string>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>__ROOT__/.mnemazine/cache/kb-yt/watch.log</string>
+  <key>StandardErrorPath</key>
+  <string>__ROOT__/.mnemazine/cache/kb-yt/watch.err</string>
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>
