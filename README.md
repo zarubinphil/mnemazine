@@ -120,7 +120,7 @@ The parser looks for:
 
 It does not use private cookies or browser sessions by default. If a site needs authentication, export the data yourself and place it in `inbox/`.
 
-![Site ingestion](docs/assets/screenshots/04-site-ingestion.svg)
+![Site ingestion](docs/assets/hero/mnemazine-site.png)
 
 ## YouTube Ingestion
 
@@ -180,7 +180,7 @@ Graphify turns the vault into a navigable relationship graph. Mnemazine uses it 
 - finding duplicate or near-duplicate ideas;
 - showing how a source affects multiple knowledge areas.
 
-![Graphify map](docs/assets/screenshots/03-graphify-map.svg)
+![Graphify map](docs/assets/hero/mnemazine-graphify.png)
 
 ## Weekly HTML Brief
 
@@ -198,7 +198,7 @@ State is stored in:
 ~/Desktop/Mnemazine/.mnemazine/state/weekly-state.json
 ```
 
-![Weekly HTML report](docs/assets/screenshots/02-weekly-html-report.svg)
+![Weekly HTML report](docs/assets/hero/mnemazine-weekly.png)
 
 ## Repository Philosophy
 
