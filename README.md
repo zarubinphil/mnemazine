@@ -180,6 +180,16 @@ Graphify turns the vault into a navigable relationship graph. Mnemazine uses it 
 - finding duplicate or near-duplicate ideas;
 - showing how a source affects multiple knowledge areas.
 
+For guarded local refreshes, use:
+
+```bash
+npm run graph:refresh -- --vault "$HOME/Полезные знания" --mode auto
+```
+
+This wrapper keeps `graph.json`, `GRAPH_REPORT.md`, backup/restore, and `needs_update` in sync instead of blindly trusting one heavy semantic run.
+
+For local Ollama semantic refreshes it also uses a guarded model ladder, rejecting models that fail a mini `graphify extract` smoke before they touch the real vault graph.
+
 ![Graphify map](docs/assets/hero/mnemazine-graphify.png)
 
 ## Weekly HTML Brief

@@ -7,6 +7,7 @@
   "scripts": {
     "install:local": "bash install.sh",
     "run": "node scripts/mnemazine-run.mjs",
+    "graph:refresh": "node scripts/mnemazine-refresh-graphify.mjs --json",
     "ingest:site": "node scripts/mnemazine-ingest-site.mjs",
     "weekly": "node scripts/mnemazine-weekly-brief-html.mjs",
     "quality": "node scripts/mnemazine-vault-quality-gate.mjs",
