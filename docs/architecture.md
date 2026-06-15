@@ -1,5 +1,7 @@
 # Architecture
 
+🇬🇧 **English** · [🇷🇺 Русский](architecture.ru.md)
+
 Mnemazine has five layers.
 
 ## 1. Inbox

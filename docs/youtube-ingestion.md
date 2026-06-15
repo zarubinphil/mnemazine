@@ -1,5 +1,7 @@
 # YouTube Ingestion
 
+🇬🇧 **English** · [🇷🇺 Русский](youtube-ingestion.ru.md)
+
 Mnemazine can ingest a YouTube channel and turn every video into a transcript
 note in the inbox, then keep pulling new uploads automatically.
 

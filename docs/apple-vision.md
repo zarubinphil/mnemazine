@@ -1,5 +1,7 @@
 # Apple Vision OCR
 
+🇬🇧 **English** · [🇷🇺 Русский](apple-vision.ru.md)
+
 On macOS, Mnemazine can use Apple's Vision framework for local OCR.
 
 Compile:

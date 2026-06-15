@@ -1,5 +1,7 @@
 # Weekly HTML Brief
 
+🇬🇧 **English** · [🇷🇺 Русский](weekly-html.ru.md)
+
 Generate:
 
 ```bash

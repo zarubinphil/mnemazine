@@ -1,5 +1,7 @@
 # Token Economics
 
+🇬🇧 **English** · [🇷🇺 Русский](token-economics.ru.md)
+
 Mnemazine reduces token use by keeping repeated, mechanical, and already-known work outside the model context.
 
 ## Local Work Costs Zero Model Tokens

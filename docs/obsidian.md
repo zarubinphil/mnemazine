@@ -1,5 +1,7 @@
 # Obsidian
 
+🇬🇧 **English** · [🇷🇺 Русский](obsidian.ru.md)
+
 Open this folder as an Obsidian vault:
 
 ```text

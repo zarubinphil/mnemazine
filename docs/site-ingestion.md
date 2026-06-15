@@ -1,5 +1,7 @@
 # Website Ingestion
 
+🇬🇧 **English** · [🇷🇺 Русский](site-ingestion.ru.md)
+
 Run:
 
 ```bash

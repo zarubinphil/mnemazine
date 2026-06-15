@@ -1,9 +1,11 @@
 # Installation
 
+🇬🇧 **English** · [🇷🇺 Русский](installation.ru.md)
+
 Install into one folder:
 
 ```bash
-git clone https://github.com/7teenno1-art/Mnemazine.git "$HOME/Desktop/Mnemazine"
+git clone https://github.com/zarubinphil/Mnemazine.git "$HOME/Desktop/Mnemazine"
 cd "$HOME/Desktop/Mnemazine"
 bash install.sh
 ```

@@ -1,5 +1,7 @@
 # Graphify
 
+🇬🇧 **English** · [🇷🇺 Русский](graphify.ru.md)
+
 Install:
 
 ```bash
