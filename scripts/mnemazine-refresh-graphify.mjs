@@ -41,7 +41,7 @@ const REPORT_PATH = path.join(GRAPHIFY_OUT, 'GRAPH_REPORT.md')
 const ANALYSIS_PATH = path.join(GRAPHIFY_OUT, '.graphify_analysis.json')
 const MANIFEST_PATH = path.join(GRAPHIFY_OUT, 'manifest.json')
 const NEEDS_UPDATE_PATH = path.join(GRAPHIFY_OUT, 'needs_update')
-const EXCLUDED_DIRS = new Set(['.git', '.obsidian', 'graphify-out'])
+const EXCLUDED_DIRS = new Set(['.git', '.obsidian'])
 
 function normalizeOllamaBaseUrl(value) {
   const raw = String(value || process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434').trim().replace(/\/+$/, '')
@@ -57,7 +57,7 @@ function rel(file) {
 async function walk(dir) {
   const out = []
   for (const item of await fs.readdir(dir, { withFileTypes: true }).catch(() => [])) {
-    if (EXCLUDED_DIRS.has(item.name)) continue
+    if (EXCLUDED_DIRS.has(item.name) || item.name.startsWith('graphify-out')) continue
     const p = path.join(dir, item.name)
     if (item.isDirectory()) out.push(...await walk(p))
     else if (item.isFile()) out.push(p)
