@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="${MNEMAZINE_ROOT:-$HOME/Desktop/Mnemazine}"
+ROOT="${MNEMAZINE_ROOT:-$HOME/Проекты/mnemazine}"
 INBOX="${MNEMAZINE_INBOX:-$ROOT/inbox}"
 VAULT="${MNEMAZINE_VAULT:-$ROOT/vault}"
 REPORTS="${MNEMAZINE_REPORTS:-$ROOT/reports}"

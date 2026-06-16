@@ -29,3 +29,14 @@ scripts/mnemazine-normalize-skill-notes.mjs
 scripts/mnemazine-refresh-core-indexes.mjs
 scripts/mnemazine-route-alias-sections-wave.mjs
 scripts/mnemazine-route-semantic-wave-*.mjs
+
+# Private codex-recheck pipeline (local vault paths, not for public repo)
+scripts/graphify_clean.py
+scripts/kb-build-queue.py
+scripts/kb-enrich-codex.sh
+scripts/kb-enrich-prompt.md
+scripts/kb-enrich-schema.json
+scripts/kb-recheck-codex.sh
+scripts/ИНСТРУКЦИЯ-codex-перепроверка.md
+scripts/PROMPT-Codex-desktop.txt
+tests/test-coverage-fix.mjs
