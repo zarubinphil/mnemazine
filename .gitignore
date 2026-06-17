@@ -9,6 +9,7 @@ __pycache__/
 .mnemazine/bin/
 .mnemazine/archive/
 .mnemazine/state/
+.mnemazine/quarantine/
 .mnemazine/reprocess-video-inbox/
 inbox/*
 !inbox/.gitkeep

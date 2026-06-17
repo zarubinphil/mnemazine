@@ -15,6 +15,7 @@ const TRANSCRIPTS = path.join(ROOT, '.mnemazine/cache/video-transcripts')
 const VIDEO_AUDIO = path.join(ROOT, '.mnemazine/cache/video-audio')
 const VIDEO_FRAMES = path.join(ROOT, '.mnemazine/cache/video-frames')
 const VIDEO_QUEUE = path.join(ROOT, '.mnemazine/cache/video-queue.jsonl')
+const EXTRACTS = path.join(ROOT, '.mnemazine/cache/extracted')
 const WHISPER_MODEL = process.env.MNEMAZINE_WHISPER_MODEL || ''
 const WHISPER_LANGUAGE = process.env.MNEMAZINE_WHISPER_LANGUAGE || 'ru'
 const VIDEO_FRAME_LIMIT = Number(process.env.MNEMAZINE_VIDEO_FRAME_LIMIT || '8')
@@ -79,6 +80,14 @@ function bullets(text, max = 7) {
     if (out.length >= max) break
   }
   return out
+}
+
+function hasUsableExtraction(text) {
+  const clean = compact(text, 2000)
+  if (clean.length < 80) return false
+  if (/^(Video queued for local Whisper transcription|No extractable text)/i.test(clean)) return false
+  const alpha = (clean.match(/[A-Za-zА-Яа-яЁё]/g) || []).length
+  return alpha >= 50
 }
 
 function isVideo(file) {
@@ -228,8 +237,8 @@ type: "knowledge-note"
 source_type: "${ext}"
 source_ref: "${ref}"
 source_hash: "${hash}"
-verified: "local extraction only"
-status: "final-local"
+verified: "extraction reviewed; external verification required"
+status: "candidate"
 ---
 
 # ${title}
@@ -258,7 +267,7 @@ ${facts.length ? facts.map(item => `- ${item}`).join('\n') : '- Local extraction
 
 ## Verification
 
-- Status: local extraction only.
+- Status: extraction reviewed; external verification required.
 - Evidence: SHA-256 source hash.
 - Limitation: external facts, dates, prices, stars, and security claims are not confirmed by this run.
 
@@ -272,6 +281,23 @@ ${facts.length ? facts.map(item => `- ${item}`).join('\n') : '- Local extraction
 - Turn repeated decisions into checklists.
 - Link related notes after Graphify update.
 `
+}
+
+async function writeExtractCache(source, hash, text, status) {
+  await ensureDir(EXTRACTS)
+  const ext = path.extname(source).toLowerCase().replace('.', '') || 'file'
+  const ref = sourceRef(hash)
+  const record = {
+    source_ref: ref,
+    source_hash: hash,
+    source_type: ext,
+    status,
+    extracted_at: new Date().toISOString(),
+    text_path: compact(text, 80) ? `${hash}.txt` : null
+  }
+  if (record.text_path) await fs.writeFile(path.join(EXTRACTS, record.text_path), text, 'utf8')
+  await fs.writeFile(path.join(EXTRACTS, `${hash}.json`), JSON.stringify(record, null, 2), 'utf8')
+  return record
 }
 
 async function archiveFile(file, hash) {
@@ -294,12 +320,21 @@ async function main() {
   const entries = (await fs.readdir(INBOX, { withFileTypes: true }))
     .filter(d => d.isFile() && !d.name.startsWith('.'))
   let processed = 0
+  let cachedOnly = 0
   const toArchive = []
   for (const entry of entries) {
     const file = path.join(INBOX, entry.name)
     const hash = await sha256(file)
     if (cache[hash]) continue
     const text = await extract(file)
+    if (!hasUsableExtraction(text)) {
+      const record = await writeExtractCache(file, hash, text, 'needs_manual_context')
+      cache[hash] = { status: record.status, source_ref: record.source_ref, cache: path.relative(ROOT, path.join(EXTRACTS, `${hash}.json`)) }
+      toArchive.push({ file, hash })
+      cachedOnly += 1
+      continue
+    }
+    await writeExtractCache(file, hash, text, 'extracted_for_note')
     const title = inferTitle(text, 'Unextractable local source')
     const noteName = `${new Date().toISOString().slice(0, 10)}-${slugify(title)}-${hash.slice(0, 12)}.md`
     const notePath = path.join(VAULT, '01 Concepts', noteName)
@@ -317,7 +352,7 @@ async function main() {
   if (spawnSync('graphify', ['--version'], { encoding: 'utf8' }).status === 0) {
     spawnSync('graphify', ['update', VAULT], { stdio: 'inherit' })
   }
-  console.log(JSON.stringify({ inbox: entries.length, processed, archived: archived.length, vault: VAULT }, null, 2))
+  console.log(JSON.stringify({ inbox: entries.length, processed, cached_only: cachedOnly, archived: archived.length, vault: VAULT }, null, 2))
 }
 
 main().catch(err => {

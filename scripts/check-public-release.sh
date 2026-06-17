@@ -6,7 +6,9 @@ ROOT="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
 # Private markers (machine paths, IPs, personal/project names) that must never ship publicly.
 PRIVATE_MARKERS='/Users/fil|72\.56|root@|Полезные знания|_ВХОДЯЩИЕ|TODOCUPS|ПКК|legal-practice|Adventure Book|AthenaOS|Филипп'
 # Token-like values (GitHub OAuth, OpenAI/Anthropic-style sk-, Slack xox*).
-TOKEN_MARKERS='gho_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]+|xox[baprs]-[A-Za-z0-9-]+'
+# Require realistic lengths and a non-word boundary before `sk-` to avoid
+# false positives such as `risk-or-verification`.
+TOKEN_MARKERS='gho_[A-Za-z0-9_]{20,}|(^|[^A-Za-z0-9])sk-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}'
 
 # Pick a scanner. Prefer ripgrep; fall back to POSIX grep so the gate still runs
 # on machines without rg. A missing scanner must HARD-FAIL, never silently pass.

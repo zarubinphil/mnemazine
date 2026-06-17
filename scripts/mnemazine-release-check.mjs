@@ -69,6 +69,7 @@ async function demoSmoke() {
   await fs.mkdir(vault, { recursive: true })
   await fs.mkdir(scripts, { recursive: true })
   await fs.copyFile(path.join(ROOT, 'demo/inbox/example-guide.md'), path.join(inbox, 'example-guide.md'))
+  await fs.writeFile(path.join(inbox, 'empty-source.bin'), '')
   await fs.copyFile(path.join(ROOT, 'scripts/mnemazine-vault-quality-gate.mjs'), path.join(scripts, 'mnemazine-vault-quality-gate.mjs'))
 
   await must('demo intake smoke', process.execPath, ['scripts/mnemazine-run.mjs'], {
@@ -93,8 +94,14 @@ async function demoSmoke() {
   if (!/type:\s*"knowledge-note"/.test(note)) throw new Error('demo smoke failed: note is not knowledge-note')
   if (!/source_hash:/.test(note) || !/local-media:/.test(note)) throw new Error('demo smoke failed: provenance missing')
 
-  const archived = (await listFiles(path.join(temp, '.mnemazine/archive'))).filter(file => file.endsWith('.md'))
-  if (archived.length !== 1) throw new Error(`demo smoke failed: expected 1 archived source, got ${archived.length}`)
+  const archived = await listFiles(path.join(temp, '.mnemazine/archive'))
+  if (archived.length !== 2) throw new Error(`demo smoke failed: expected 2 archived sources, got ${archived.length}`)
+
+  const extractRecords = (await listFiles(path.join(temp, '.mnemazine/cache/extracted'))).filter(file => file.endsWith('.json'))
+  if (extractRecords.length !== 2) throw new Error(`demo smoke failed: expected 2 extract records, got ${extractRecords.length}`)
+  const cache = await readJson(path.join(temp, '.mnemazine/cache/processed-hashes.json'))
+  const cacheOnly = Object.values(cache).filter(value => value && typeof value === 'object' && value.status === 'needs_manual_context')
+  if (cacheOnly.length !== 1) throw new Error(`demo smoke failed: expected 1 cache-only source, got ${cacheOnly.length}`)
 }
 
 async function qualityAndPublicChecks() {
