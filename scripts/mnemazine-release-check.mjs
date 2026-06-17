@@ -52,6 +52,7 @@ async function checkSyntax() {
     'scripts/mnemazine-refresh-graphify.mjs',
     'scripts/mnemazine-refresh-graphify-smoke.mjs',
     'scripts/mnemazine-weekly-brief-html.mjs',
+    'scripts/mnemazine-report-quality-gate.mjs',
     'scripts/mnemazine-release-check.mjs'
   ]
   for (const script of scripts) {
@@ -98,7 +99,38 @@ async function demoSmoke() {
 
 async function qualityAndPublicChecks() {
   await must('demo vault quality', 'npm', ['run', 'quality', '--', '--vault', 'demo/vault'])
+  await reportQualityGateSmoke()
   await must('public release scan', 'npm', ['run', 'public-check'])
+}
+
+async function reportQualityGateSmoke() {
+  const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'mnemazine-report-gate-'))
+  const raw = path.join(temp, 'raw.html')
+  const good = path.join(temp, 'good.html')
+  await fs.writeFile(raw, [
+    '<!doctype html><html><body>',
+    '<article><h2>Video keyframe OCR</h2><p>IMG_1234.PNG raw OCR без синтеза.</p></article>',
+    '</body></html>'
+  ].join(''), 'utf8')
+  await fs.writeFile(good, [
+    '<!doctype html><html><body>',
+    '<main data-knowledge-atom="demo">',
+    '<h1>Синтезированные знания</h1>',
+    '<section><h2>Синтез</h2><p>Проверенная идея после обработки.</p></section>',
+    '<section><h2>Расширил источниками</h2>',
+    '<a href="https://example.com/a">a</a>',
+    '<a href="https://example.com/b">b</a>',
+    '<a href="https://example.com/c">c</a></section>',
+    '<section><h2>Где применить</h2><p>В пайплайне.</p></section>',
+    '<section><h2>Проверка и риск</h2><p>Проверить источники.</p></section>',
+    '<section><h2>Следующее действие</h2><p>Добавить тест.</p></section>',
+    '</main></body></html>'
+  ].join(''), 'utf8')
+
+  const rawResult = await run(process.execPath, ['scripts/mnemazine-report-quality-gate.mjs', '--report', raw])
+  if (rawResult.code === 0) throw new Error('report gate smoke failed: raw OCR report passed')
+
+  await must('report quality gate smoke:good', process.execPath, ['scripts/mnemazine-report-quality-gate.mjs', '--report', good])
 }
 
 async function repoMetadataCheck() {
