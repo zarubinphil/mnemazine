@@ -53,6 +53,7 @@ async function checkSyntax() {
     'scripts/mnemazine-refresh-graphify-smoke.mjs',
     'scripts/mnemazine-graph-utils.mjs',
     'scripts/mnemazine-repair-graphify-graph.mjs',
+    'scripts/mnemazine-semantic-shards.mjs',
     'scripts/mnemazine-synthesize.mjs',
     'scripts/mnemazine-weekly-brief-html.mjs',
     'scripts/mnemazine-report-quality-gate.mjs',

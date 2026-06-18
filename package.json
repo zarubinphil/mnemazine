@@ -8,6 +8,7 @@
     "install:local": "bash install.sh",
     "run": "node scripts/mnemazine-run.mjs",
     "graph:refresh": "node scripts/mnemazine-refresh-graphify.mjs --json",
+    "graph:shards": "node scripts/mnemazine-semantic-shards.mjs",
     "graph:smoke": "node scripts/mnemazine-refresh-graphify-smoke.mjs",
     "ingest:site": "node scripts/mnemazine-ingest-site.mjs",
     "synthesize": "node scripts/mnemazine-synthesize.mjs",
