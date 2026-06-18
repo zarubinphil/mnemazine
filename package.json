@@ -15,6 +15,7 @@
     "synthesize": "node scripts/mnemazine-synthesize.mjs",
     "weekly": "node scripts/mnemazine-weekly-brief-html.mjs",
     "weekly:state": "node scripts/mnemazine-weekly-state.mjs",
+    "digest": "node scripts/mnemazine-digest.mjs",
     "quality": "node scripts/mnemazine-vault-quality-gate.mjs",
     "report:quality": "node scripts/mnemazine-report-quality-gate.mjs",
     "public-check": "bash scripts/check-public-release.sh",

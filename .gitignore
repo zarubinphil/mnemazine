@@ -10,6 +10,8 @@ __pycache__/
 .mnemazine/archive/
 .mnemazine/state/
 .mnemazine/quarantine/
+.mnemazine/backlog/
+.mnemazine/owner-context.txt
 .mnemazine/rebuild/
 .mnemazine/reprocess-video-inbox/
 inbox/*

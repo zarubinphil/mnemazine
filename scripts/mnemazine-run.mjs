@@ -320,6 +320,11 @@ async function main() {
   if (spawnSync('graphify', ['--version'], { encoding: 'utf8' }).status === 0) {
     spawnSync('graphify', ['update', VAULT], { stdio: 'inherit' })
   }
+  // Deep + final stage: Russian humanizer digest, AFTER the graph so connections
+  // are real. Writes a Справка into each note + one session summary note.
+  if (DEEP) {
+    spawnSync(process.execPath, [path.join(ROOT, 'scripts/mnemazine-digest.mjs')], { stdio: 'inherit', env: process.env })
+  }
   console.log(JSON.stringify({ inbox: entries.length, processed, cached_only: cachedOnly, archived: archived.length, deep: DEEP, vault: VAULT }, null, 2))
 }
 
