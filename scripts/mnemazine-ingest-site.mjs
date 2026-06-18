@@ -43,6 +43,57 @@ function stripHtml(html) {
     .trim()
 }
 
+function metaDescription(html) {
+  const re = /<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]*content=["']([^"']+)["']/i
+  const alt = /<meta[^>]+content=["']([^"']+)["'][^>]*(?:name|property)=["'](?:description|og:description)["']/i
+  return escMd(html.match(re)?.[1] || html.match(alt)?.[1] || '')
+}
+
+// Parse <script type="application/ld+json"> blocks; surface @type + name/headline.
+function jsonLd(html) {
+  const out = []
+  for (const m of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const data = JSON.parse(m[1].trim())
+      for (const node of Array.isArray(data) ? data : (data['@graph'] || [data])) {
+        const type = [].concat(node['@type'] || []).join('/')
+        const name = node.name || node.headline || node.title || ''
+        if (type || name) out.push(`${type || 'Thing'}${name ? `: ${escMd(String(name)).slice(0, 160)}` : ''}`)
+      }
+    } catch {}
+  }
+  return [...new Set(out)].slice(0, 12)
+}
+
+// API hints inside same-origin inline JavaScript: REST-ish paths and endpoints.
+// ponytail: inline scripts only — linked .js needs extra same-origin fetches;
+// add a capped fetch loop here if a target hides its API in external bundles.
+function apiHints(html, base) {
+  const origin = (() => { try { return new URL(base).origin } catch { return '' } })()
+  const js = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]).join('\n')
+  const hints = new Set()
+  for (const m of js.matchAll(/["'`](\/(?:api|v\d|graphql|rest|wp-json)\/[A-Za-z0-9_\-\/.{}:]*)["'`]/g)) hints.add(m[1])
+  for (const m of js.matchAll(/["'`](https?:\/\/[^"'`\s]+\/(?:api|v\d|graphql)\/[^"'`\s]*)["'`]/g)) {
+    try { if (!origin || new URL(m[1]).origin === origin) hints.add(m[1]) } catch {}
+  }
+  return [...hints].slice(0, 15)
+}
+
+// Same-origin links that look like documentation (not just GitHub).
+function docLinks(html, base) {
+  const out = new Set()
+  for (const m of html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const href = m[1]
+    const label = stripHtml(m[2]).toLowerCase()
+    if (/\/(docs?|documentation|guide|reference|api|manual|wiki)\b/i.test(href) ||
+        /\b(docs|documentation|guide|reference|api docs|manual)\b/.test(label) ||
+        /readthedocs|swagger|openapi|gitbook|docusaurus/i.test(href)) {
+      try { out.add(new URL(href, base).href.replace(/#.*$/, '')) } catch {}
+    }
+  }
+  return [...out].slice(0, 15)
+}
+
 function slug(value) {
   return String(value || 'site')
     .toLowerCase()
@@ -97,14 +148,20 @@ async function discover(seedUrl) {
 
 function pageNote(url, html) {
   const title = stripHtml(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || url)
+  const description = metaDescription(html)
   const text = stripHtml(html)
-  const github = [...html.matchAll(/https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/g)].map(m => m[0])
+  const github = [...new Set([...html.matchAll(/https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/g)].map(m => m[0]))]
+  const structured = jsonLd(html)
+  const api = apiHints(html, url)
+  const docs = docLinks(html, url)
+  const list = (items, empty) => items.length ? items.map(i => `- ${i}`).join('\n') : `- ${empty}`
   return `# ${title}
 
 ## What This Is
 
 This note was created from a public web page and should be refined into smaller durable notes if it contains several topics.
 
+${description ? `> ${description}\n` : ''}
 ## Source
 
 - URL: ${url}
@@ -113,9 +170,21 @@ This note was created from a public web page and should be refined into smaller 
 
 ${escMd(text.slice(0, 6000))}
 
+## Structured Data (JSON-LD)
+
+${list(structured, 'No JSON-LD structured data on this page.')}
+
+## Public API Hints
+
+${list(api, 'No same-origin API endpoints detected in inline scripts.')}
+
+## Documentation Links
+
+${list(docs, 'No documentation links found on this page.')}
+
 ## Public Repositories Mentioned
 
-${github.length ? [...new Set(github)].map(u => `- ${u}`).join('\n') : '- None found on this page.'}
+${list(github, 'None found on this page.')}
 
 ## Verification
 
