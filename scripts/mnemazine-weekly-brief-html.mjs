@@ -61,7 +61,7 @@ main{padding:34px max(18px,6vw) 70px}.grid{display:grid;grid-template-columns:re
 </style>
 </head>
 <body>
-<header><section class="hero"><h1>Mnemazine Weekly</h1><p class="lead">Сводка знаний за последние 7 дней: что появилось, что стоит взять в работу, что можно забыть.</p></section></header>
+<header><section class="hero"><h1>Mnemazine Weekly</h1><p class="lead">Сводка знаний за последние 7 дней: что появилось, что стоит взять в работу, что можно забыть.</p><button id="export" style="margin-top:18px;border:0;background:#fff;color:var(--blue);font-weight:700;border-radius:8px;padding:11px 16px;cursor:pointer">⬇ Скачать weekly-state.json</button></section></header>
 <main><section class="grid">
 ${cards.map((c, i) => `<article class="card" data-id="${esc(c.file)}"><div class="path">${esc(c.file)}</div><h2>${esc(c.title)}</h2><p>${esc(c.summary)}</p><div class="actions"><button data-v="read">Прочитал</button><button data-v="work">В работу</button><button data-v="forget">Забыть</button></div></article>`).join('\n') || '<article class="card"><h2>За неделю новых заметок нет</h2><p>Положите материалы в inbox и запустите Mnemazine.</p></article>'}
 </section></main>
@@ -75,6 +75,12 @@ document.querySelectorAll('.card').forEach(card=>{
     btn.onclick=()=>{state[id]=btn.dataset.v;localStorage.setItem(KEY,JSON.stringify(state));card.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
   })
 })
+// Export local state to a file the node CLI applies to the vault:
+//   node scripts/mnemazine-weekly-state.mjs --state ~/Downloads/weekly-state.json
+document.getElementById('export').onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='weekly-state.json';a.click();URL.revokeObjectURL(a.href);
+};
 </script>
 </body></html>`
 
