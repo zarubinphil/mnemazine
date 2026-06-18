@@ -55,6 +55,7 @@ async function checkSyntax() {
     'scripts/mnemazine-repair-graphify-graph.mjs',
     'scripts/mnemazine-semantic-shards.mjs',
     'scripts/mnemazine-synthesize.mjs',
+    'scripts/mnemazine-llm.mjs',
     'scripts/mnemazine-codex.mjs',
     'scripts/mnemazine-verify.mjs',
     'scripts/mnemazine-weekly-brief-html.mjs',
@@ -82,6 +83,7 @@ async function demoSmoke() {
   await fs.writeFile(path.join(inbox, 'empty-source.bin'), '')
   await fs.copyFile(path.join(ROOT, 'scripts/mnemazine-vault-quality-gate.mjs'), path.join(scripts, 'mnemazine-vault-quality-gate.mjs'))
   await fs.copyFile(path.join(ROOT, 'scripts/mnemazine-synthesize.mjs'), path.join(scripts, 'mnemazine-synthesize.mjs'))
+  await fs.copyFile(path.join(ROOT, 'scripts/mnemazine-llm.mjs'), path.join(scripts, 'mnemazine-llm.mjs'))
   await fs.copyFile(path.join(ROOT, 'scripts/mnemazine-codex.mjs'), path.join(scripts, 'mnemazine-codex.mjs'))
   await fs.copyFile(path.join(ROOT, 'scripts/mnemazine-verify.mjs'), path.join(scripts, 'mnemazine-verify.mjs'))
 

@@ -2,7 +2,7 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
-import { codexAvailable, codexJson, fenceUntrusted } from './mnemazine-codex.mjs'
+import { llmAvailable, llmJson, fenceUntrusted } from './mnemazine-llm.mjs'
 import { verifyLocal, verifyDeep } from './mnemazine-verify.mjs'
 
 const ROOT = process.env.MNEMAZINE_ROOT || path.resolve(process.cwd())
@@ -349,7 +349,7 @@ ${fenceUntrusted('MATERIAL', text)}`
 }
 
 async function atomizeCluster(cluster, sources) {
-  const result = await codexJson(atomPrompt(cluster, sources), ATOM_SCHEMA)
+  const result = await llmJson(atomPrompt(cluster, sources), ATOM_SCHEMA)
   const atoms = Array.isArray(result?.atoms) ? result.atoms : []
   return atoms.filter(a => a && a.title && a.what).slice(0, MAX_ATOMS)
 }
@@ -432,9 +432,9 @@ for (const record of records) {
 let written = 0
 let skipped = 0
 let atomized = 0
-const useAtomize = DEEP && codexAvailable()
-if (DEEP && !codexAvailable()) {
-  console.error('[synthesize] --deep requested but codex unavailable; falling back to local template synthesis')
+const useAtomize = DEEP && llmAvailable()
+if (DEEP && !llmAvailable()) {
+  console.error('[synthesize] --deep requested but LLM unavailable; falling back to local template synthesis')
 }
 for (const cluster of clusters.values()) {
   const parts = chunks(cluster.records, 25)
@@ -483,5 +483,5 @@ for (const cluster of clusters.values()) {
 
 // degraded: --deep was requested but the deep path could not run (codex absent),
 // so the run silently fell back to local templates. Callers can detect this.
-const degraded = DEEP && !codexAvailable()
+const degraded = DEEP && !llmAvailable()
 console.log(JSON.stringify({ ok: true, degraded, records: records.length, clusters: clusters.size, written, atomized, skipped }, null, 2))

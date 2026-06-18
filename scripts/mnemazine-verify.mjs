@@ -4,7 +4,7 @@
 // network: HEAD reachability + a codex web cross-check of the claim.
 // ponytail: local gate is deliberately structural (no HEAD by default) so the
 // conservative pipeline never reaches the network. Reachability+LLM only on --deep.
-import { codexAvailable, codexJson, fenceUntrusted } from './mnemazine-codex.mjs'
+import { llmAvailable, llmJson, fenceUntrusted } from './mnemazine-llm.mjs'
 
 // Local gate: a source URL present means the claim is at least anchored
 // ("assumed"); none means we cannot back it at all ("unknown"). Never claims
@@ -54,9 +54,9 @@ export async function verifyDeep(claim, urls = [], options = {}) {
   for (const url of (urls || []).filter(Boolean)) {
     if (await headOk(url, timeoutMs)) live.push(url)
   }
-  if (!codexAvailable()) {
+  if (!llmAvailable(options.provider)) {
     const local = verifyLocal(live)
-    return { ...local, checked: live, note: `codex unavailable; reachable=${live.length}` }
+    return { ...local, checked: live, note: `llm unavailable; reachable=${live.length}` }
   }
   try {
     const prompt = `Verify whether the SOURCES below support the CLAIM. Use web search to check. Return status: "verified" only if a source clearly supports the claim, "assumed" if a source is relevant but does not clearly confirm it, "unknown" if no source supports it. Be strict.
@@ -65,9 +65,9 @@ ${fenceUntrusted('CLAIM', String(claim).slice(0, 4000))}
 
 SOURCES:
 ${live.length ? live.join('\n') : '(none reachable)'}`
-    const res = await codexJson(prompt, VERIFY_SCHEMA, { timeoutMs: options.codexTimeoutMs })
+    const res = await llmJson(prompt, VERIFY_SCHEMA, { timeoutMs: options.llmTimeoutMs, provider: options.provider, tools: ['WebSearch', 'WebFetch'] })
     const status = ['verified', 'assumed', 'unknown'].includes(res?.status) ? res.status : 'unknown'
-    return { status, checked: res?.checked?.length ? res.checked : live, evidence: res?.evidence || '', note: 'codex cross-check' }
+    return { status, checked: res?.checked?.length ? res.checked : live, evidence: res?.evidence || '', note: 'llm cross-check' }
   } catch (err) {
     const local = verifyLocal(live)
     return { ...local, checked: live, note: `deep verify failed: ${err.message}` }
@@ -90,8 +90,9 @@ if (process.argv.includes('--selftest')) {
   if (a.status !== 'assumed') throw new Error('expected assumed for url present')
   if (b.status !== 'unknown') throw new Error('expected unknown for no url')
 
-  // Deep path with a stub codex bin: confirm codexJson round-trips and the
-  // status enum is honoured end-to-end (was entirely untested before).
+  // Deep path with a stub codex bin (provider=codex): confirm llmJson round-trips
+  // and the status enum is honoured end-to-end. Claude backend shares the same
+  // contract; live Claude needs one real run to confirm (unproven in CI).
   const { promises: fsp } = await import('node:fs')
   const os = await import('node:os')
   const path = await import('node:path')
@@ -105,7 +106,7 @@ cat >/dev/null
 printf '%s' '{"status":"verified","evidence":"stub confirms","checked":["https://e.test"]}' > "$out"
 `, { mode: 0o755 })
   const res = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--deep-once'], {
-    env: { ...process.env, MNEMAZINE_CODEX_BIN: bin }, encoding: 'utf8'
+    env: { ...process.env, MNEMAZINE_LLM: 'codex', MNEMAZINE_CODEX_BIN: bin }, encoding: 'utf8'
   })
   await fsp.rm(dir, { recursive: true, force: true })
   if (res.status !== 0) throw new Error(`deep-once failed: ${res.stderr}`)
