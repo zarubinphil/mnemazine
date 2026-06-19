@@ -64,7 +64,19 @@
 
 <button class="ghost" id="run">Прогнать протокол сейчас</button>
 
+<div class="card">
+  <div class="hint" style="margin-bottom:8px">🔍 Поиск по базе знаний</div>
+  <textarea id="topic" style="min-height:54px" placeholder="Тема — рой агентов соберёт справку…"></textarea>
+  <button id="search">Найти</button>
+  <ul id="reports"></ul>
+</div>
+
 <div class="toast" id="toast"></div>
+
+<div class="card" id="viewer" style="display:none">
+  <button class="ghost" id="viewerClose" style="margin:0 0 10px">← Назад</button>
+  <pre id="viewerBody" style="white-space:pre-wrap;word-break:break-word;font:13px/1.5 ui-monospace,monospace;margin:0"></pre>
+</div>
 
 <script>
 const tg = window.Telegram?.WebApp
@@ -127,10 +139,47 @@ $('run').onclick = () => {
   else if (confirm('Запустить прогон протокола сейчас?')) doRun()
 }
 
-refresh()
+async function loadReports() {
+  try {
+    const { reports } = await api('searches')
+    const ul = $('reports'); ul.replaceChildren()
+    for (const r of reports) {
+      const li = document.createElement('li')
+      const name = document.createElement('span')
+      // textContent — report names are server-generated but stay safe by default.
+      name.textContent = r.name.replace(/^search-/, '').replace(/\.md$/, '')
+      name.style.cursor = 'pointer'; name.style.color = 'var(--accent)'
+      name.onclick = () => openReport(r.name)
+      const at = document.createElement('span'); at.textContent = fmt(r.at)
+      li.append(name, at); ul.append(li)
+    }
+  } catch (e) { /* reports dir may be empty before first sync */ }
+}
+
+async function openReport(name) {
+  try {
+    const { markdown } = await api('search?name=' + encodeURIComponent(name))
+    $('viewerBody').textContent = markdown   // render as text — no markdown sink, no XSS
+    $('viewer').style.display = 'block'
+    $('viewer').scrollIntoView({ behavior: 'smooth' })
+  } catch (e) { toast('Ошибка: ' + e.message) }
+}
+$('viewerClose').onclick = () => { $('viewer').style.display = 'none' }
+
+$('search').onclick = async () => {
+  const topic = $('topic').value.trim()
+  if (!topic) return toast('Пусто')
+  tg?.HapticFeedback?.impactOccurred('medium')
+  $('search').disabled = true
+  try { await api('search', { method: 'POST', body: JSON.stringify({ topic }) }); $('topic').value = ''; toast('✓ поиск в очереди') }
+  catch (e) { toast('Ошибка: ' + e.message) }
+  finally { setTimeout(() => $('search').disabled = false, 1500) }
+}
+
+refresh(); loadReports()
 // Keep status fresh while the app is open and visible.
-setInterval(() => { if (document.visibilityState === 'visible') refresh() }, 15000)
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh() })
+setInterval(() => { if (document.visibilityState === 'visible') { refresh(); loadReports() } }, 15000)
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { refresh(); loadReports() } })
 </script>
 </body>
 </html>

@@ -19,6 +19,9 @@ if (!TOKEN && !SELFTEST) { console.error('FATAL: TELEGRAM_BOT_TOKEN not set'); p
 const INBOX = path.resolve(process.env.MNEMAZINE_INBOX || path.join(process.cwd(), 'inbox'))
 const RUN_FLAG = path.join(INBOX, '.run-now')
 const RUN_MARKER = path.join(INBOX, '.last-run')
+const SEARCH_QUEUE = path.join(INBOX, '.search-queue')
+// Reports are produced on the Mac (vault is local there) and rsynced here.
+const REPORTS = path.resolve(process.env.MNEMAZINE_REPORTS || path.join(process.cwd(), 'reports'))
 const PORT = Number(process.env.PORT || 8787)
 const ALLOWED = (process.env.ALLOWED_CHAT_IDS || '').split(',').map(s => s.trim()).filter(Boolean)
 const throttle = new Map() // user.id -> last write ms
@@ -85,6 +88,32 @@ async function send(text) {
   return name
 }
 
+// Queue a topic search. Vault lives on the Mac, so the VPS can only enqueue;
+// the Mac poller drains this, runs the swarm, and rsyncs reports back here.
+async function queueSearch(topic, user) {
+  await fs.mkdir(INBOX, { recursive: true })
+  const line = JSON.stringify({ topic, by: user, at: new Date().toISOString() }) + '\n'
+  await fs.appendFile(SEARCH_QUEUE, line, 'utf8')
+}
+
+async function listReports() {
+  const names = (await fs.readdir(REPORTS).catch(() => [])).filter(n => n.endsWith('.md'))
+  const out = []
+  for (const n of names.sort().reverse().slice(0, 20)) {
+    const st = await fs.stat(path.join(REPORTS, n)).catch(() => null)
+    if (st) out.push({ name: n, at: st.mtime.toISOString() })
+  }
+  return out
+}
+
+async function readReport(name) {
+  // Path-escape guard: only a bare *.md filename inside REPORTS, no traversal.
+  if (!name || name !== path.basename(name) || !name.endsWith('.md')) return null
+  const full = path.join(REPORTS, name)
+  if (path.dirname(full) !== REPORTS) return null
+  return fs.readFile(full, 'utf8').catch(() => null)
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost')
@@ -107,6 +136,18 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/api/status') return json(res, 200, await status())
+    if (req.method === 'GET' && url.pathname === '/api/searches') return json(res, 200, { reports: await listReports() })
+    if (req.method === 'GET' && url.pathname === '/api/search') {
+      const md = await readReport(url.searchParams.get('name') || '')
+      if (md == null) return json(res, 404, { error: 'not found' })
+      return json(res, 200, { markdown: md })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/search') {
+      const { topic } = JSON.parse(await readBody(req) || '{}')
+      if (!topic || !topic.trim() || topic.length > 500) return json(res, 400, { error: 'bad topic' })
+      await queueSearch(topic.trim(), user.id)
+      return json(res, 200, { ok: true, queued: true })
+    }
     if (req.method === 'POST' && url.pathname === '/api/send') {
       const { text } = JSON.parse(await readBody(req) || '{}')
       if (!text || !text.trim()) return json(res, 400, { error: 'empty text' })
