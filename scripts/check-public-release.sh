@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
 
 # Private markers (machine paths, IPs, personal/project names) that must never ship publicly.
-PRIVATE_MARKERS='/Users/fil|72\.56|root@|Полезные знания|_ВХОДЯЩИЕ|TODOCUPS|ПКК|legal-practice|Adventure Book|AthenaOS|Филипп'
+# `root@` requires a real host char after it (lowercase/digit) so the literal
+# placeholder `root@YOUR_VPS_HOST` in docs/examples is not a false positive.
+PRIVATE_MARKERS='/Users/fil|72\.56|root@[a-z0-9]|Полезные знания|_ВХОДЯЩИЕ|TODOCUPS|ПКК|legal-practice|Adventure Book|AthenaOS|Филипп'
 # Token-like values across common providers. Require realistic lengths and a
 # non-word boundary before `sk-` to avoid false positives like `risk-or-x`.
 # Covers: GitHub OAuth/PAT (gho_/ghp_/ghu_/ghs_/ghr_), OpenAI/Anthropic sk-,
