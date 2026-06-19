@@ -56,6 +56,7 @@ async function checkSyntax() {
     'scripts/mnemazine-semantic-shards.mjs',
     'scripts/mnemazine-semantic-batches.mjs',
     'scripts/mnemazine-synthesize.mjs',
+    'scripts/mnemazine-kb-search.mjs',
     'scripts/mnemazine-llm.mjs',
     'scripts/mnemazine-codex.mjs',
     'scripts/mnemazine-verify.mjs',
@@ -174,6 +175,13 @@ async function reportQualityGateSmoke() {
   await must('report quality gate smoke:good', process.execPath, ['scripts/mnemazine-report-quality-gate.mjs', '--report', good])
 }
 
+async function searchEvalSmoke() {
+  // Tier A only (0 tokens): recall/anti-noise of the KB search skill. Tier B
+  // (LLM judge) is opt-in via `npm run search:eval -- --deep`, not in the gate.
+  await must('kb-search selftest', process.execPath, ['scripts/mnemazine-kb-search.mjs', '--selftest'])
+  await must('kb-search eval (Tier A)', process.execPath, ['tests/search-eval.mjs'])
+}
+
 async function repoMetadataCheck() {
   const pkg = await readJson(path.join(ROOT, 'package.json'))
   if (!pkg.description || !/[А-Яа-яЁё]/.test(pkg.description) || !/[A-Za-z]/.test(pkg.description)) {
@@ -211,6 +219,7 @@ async function main() {
     ['syntax', checkSyntax],
     ['demo-smoke', demoSmoke],
     ['quality-public', qualityAndPublicChecks],
+    ['search-eval', searchEvalSmoke],
     ['repo-metadata', repoMetadataCheck]
   ]
   const passed = []

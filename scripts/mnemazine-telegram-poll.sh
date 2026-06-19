@@ -11,6 +11,7 @@ REPO="${MNEMAZINE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 VPS="${MNEMAZINE_VPS:-root@YOUR_VPS_HOST}"
 KEY="${MNEMAZINE_VPS_KEY:-$HOME/.ssh/id_rsa}"
 REMOTE_INBOX="${MNEMAZINE_REMOTE_INBOX:-/var/www/mnemazine-inbox}"
+REMOTE_REPORTS="${MNEMAZINE_REMOTE_REPORTS:-/var/www/mnemazine-reports}"
 
 # ponytail: fail fast if still on the placeholder — beats a confusing ssh error.
 if [ "$VPS" = "root@YOUR_VPS_HOST" ]; then
@@ -27,6 +28,20 @@ LOCK="$REPO/.mnemazine/poll.lock"
 [ -d "$LOCK" ] && find "$LOCK" -maxdepth 0 -mmin +60 -exec rmdir {} \; 2>/dev/null
 if ! mkdir "$LOCK" 2>/dev/null; then exit 0; fi   # previous tick still running
 trap 'rmdir "$LOCK" 2>/dev/null' EXIT
+
+# Search queue (vault is Mac-only, so searches run here). Drain atomically:
+# cat + truncate in one ssh. Each line is a JSON {topic}; parse safely in node.
+queue="$($SSH "$VPS" "f=$REMOTE_INBOX/.search-queue; if [ -f \"\$f\" ]; then cat \"\$f\"; : > \"\$f\"; fi" 2>/dev/null || true)"
+if [ -n "$queue" ]; then
+  topics="$(printf '%s' "$queue" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{for(const l of d.split("\n")){if(!l.trim())continue;try{const t=JSON.parse(l).topic;if(t)process.stdout.write(t.replace(/\n/g," ")+"\n")}catch{}}})' 2>/dev/null || true)"
+  cd "$REPO"
+  while IFS= read -r topic; do
+    [ -z "$topic" ] && continue
+    MNEMAZINE_DEEP=1 npm run --silent search -- --topic "$topic" || echo "search failed: $topic" >&2
+  done <<< "$topics"
+  # Push reports back so the mini app can read them (reverse channel Mac->VPS).
+  [ -d "$REPO/reports" ] && rsync -az -e "$SSH" "$REPO/reports/" "$VPS:$REMOTE_REPORTS/" 2>/dev/null || true
+fi
 
 run=0; manual=0
 # Consume run-now flag atomically: print + delete in one ssh.

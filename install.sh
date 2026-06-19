@@ -67,3 +67,32 @@ echo "Root: $ROOT"
 echo "Inbox: $INBOX"
 echo "Vault: $VAULT"
 echo "Open the vault folder in Obsidian."
+
+cat <<'EOF'
+
+────────────────────────────────────────────────────────────
+Привет! Это Philipp — автор Мнемазины.
+
+Спасибо, что ставите мою разработку. Я делал её, чтобы сырьё
+превращалось в проверенное, готовое к работе знание — и рад,
+что теперь она будет помогать и вам.
+
+★ Если зашло — поставьте звезду на GitHub, мне это правда важно:
+  https://github.com/zarubinphil/Mnemazine
+💡 Есть идея, как сделать лучше? Откройте issue или PR —
+   предлагайте улучшения, я читаю каждое.
+
+— — —
+
+Hi! This is Philipp — the author of Mnemazine.
+
+Thank you for installing my project. I built it to turn raw
+input into verified, ready-to-use knowledge — glad it will now
+help you too.
+
+★ If you like it, please star it on GitHub — it truly helps:
+  https://github.com/zarubinphil/Mnemazine
+💡 Got an idea to make it better? Open an issue or PR —
+   improvements are always welcome, I read every one.
+────────────────────────────────────────────────────────────
+EOF
