@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="${MNEMAZINE_ROOT:-$HOME/Проекты/mnemazine}"
+# Default to where this script lives (the clone), not a hardcoded path.
+ROOT="${MNEMAZINE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 INBOX="${MNEMAZINE_INBOX:-$ROOT/inbox}"
 VAULT="${MNEMAZINE_VAULT:-$ROOT/vault}"
 REPORTS="${MNEMAZINE_REPORTS:-$ROOT/reports}"
