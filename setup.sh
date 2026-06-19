@@ -136,7 +136,7 @@ fi
 # ---- Stage 6: build the skeleton -------------------------------------------
 stage 6 "Ставлю каркас Mnemazine"
 ok "Запускаю install.sh (vault, папки, venv, OCR-сборка)…"
-if ! MNEMAZINE_ROOT="$ROOT" MNEMAZINE_INBOX="$INBOX" run bash "$ROOT/install.sh"; then
+if ! MNEMAZINE_FROM_SETUP=1 MNEMAZINE_ROOT="$ROOT" MNEMAZINE_INBOX="$INBOX" run bash "$ROOT/install.sh"; then
   no "install.sh завершился с ошибкой — каркас не собран."
   halt
 fi
@@ -183,3 +183,7 @@ note "Открой папку vault в Obsidian."
 note "Прогон: cd $ROOT && npm run run   (deep: npm run run -- --deep)"
 [ "$BOT_MODE" = "vps" ] && note "Mini App + ежедневный pull: см. docs/telegram-intake.md (этапы 2-3)."
 b "Всё. Пользуйся."
+
+# Author greeting last, so it is what the user sees at the end (not buried
+# mid-flow inside install.sh, which stays silent under MNEMAZINE_FROM_SETUP).
+[ "$DRY" = "1" ] || bash "$ROOT/scripts/hello.sh"
