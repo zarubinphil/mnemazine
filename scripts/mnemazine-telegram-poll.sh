@@ -5,10 +5,18 @@
 # Reverse channel VPS->Mac without a public Mac: Mac polls a flag the VPS sets.
 set -euo pipefail
 
-REPO="${MNEMAZINE_ROOT:-$HOME/Проекты/mnemazine}"
+REPO="${MNEMAZINE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+# Live host/key/paths live in a gitignored config, never hardcoded here.
+[ -f "$REPO/.mnemazine/config.env" ] && . "$REPO/.mnemazine/config.env"
 VPS="${MNEMAZINE_VPS:-root@YOUR_VPS_HOST}"
 KEY="${MNEMAZINE_VPS_KEY:-$HOME/.ssh/id_rsa}"
 REMOTE_INBOX="${MNEMAZINE_REMOTE_INBOX:-/var/www/mnemazine-inbox}"
+
+# ponytail: fail fast if still on the placeholder — beats a confusing ssh error.
+if [ "$VPS" = "root@YOUR_VPS_HOST" ]; then
+  echo "Set MNEMAZINE_VPS (and MNEMAZINE_VPS_KEY) in $REPO/.mnemazine/config.env" >&2
+  exit 1
+fi
 SSH="ssh -i $KEY -o StrictHostKeyChecking=no -o ConnectTimeout=10"
 MARKER="$REPO/.mnemazine/.last-daily"
 
