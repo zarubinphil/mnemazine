@@ -113,7 +113,7 @@ $('send').onclick = async () => {
   finally { $('send').disabled = false }
 }
 
-$('run').onclick = async () => {
+async function doRun() {
   tg?.HapticFeedback?.impactOccurred('medium')
   $('run').disabled = true
   try { await api('run', { method: 'POST' }); toast('✓ протокол поставлен в очередь') }
@@ -121,7 +121,16 @@ $('run').onclick = async () => {
   finally { setTimeout(() => $('run').disabled = false, 1500) }
 }
 
+$('run').onclick = () => {
+  // Confirm before kicking off a real (token-spending) protocol run.
+  if (tg?.showConfirm) tg.showConfirm('Запустить прогон протокола сейчас?', ok => { if (ok) doRun() })
+  else if (confirm('Запустить прогон протокола сейчас?')) doRun()
+}
+
 refresh()
+// Keep status fresh while the app is open and visible.
+setInterval(() => { if (document.visibilityState === 'visible') refresh() }, 15000)
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh() })
 </script>
 </body>
 </html>

@@ -21,6 +21,7 @@ const RUN_FLAG = path.join(INBOX, '.run-now')
 const RUN_MARKER = path.join(INBOX, '.last-run')
 const PORT = Number(process.env.PORT || 8787)
 const ALLOWED = (process.env.ALLOWED_CHAT_IDS || '').split(',').map(s => s.trim()).filter(Boolean)
+const throttle = new Map() // user.id -> last write ms
 
 // Verify Telegram WebApp initData. Returns the user object or null.
 // https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
@@ -93,6 +94,17 @@ const server = http.createServer(async (req, res) => {
     const user = verifyInitData(String(initData), TOKEN)
     if (!user) return json(res, 401, { error: 'bad initData' })
     if (ALLOWED.length && !ALLOWED.includes(String(user.id))) return json(res, 403, { error: 'forbidden' })
+
+    // Structured access log (stderr): who hit what, for audit.
+    console.error(JSON.stringify({ ts: new Date().toISOString(), user: user.id, method: req.method, path: url.pathname }))
+
+    // Light per-user throttle on writes (1/sec) — coarse anti-flood, not a quota.
+    if (req.method === 'POST') {
+      const last = throttle.get(user.id) || 0
+      const now = Date.now()
+      if (now - last < 1000) return json(res, 429, { error: 'slow down' })
+      throttle.set(user.id, now)
+    }
 
     if (req.method === 'GET' && url.pathname === '/api/status') return json(res, 200, await status())
     if (req.method === 'POST' && url.pathname === '/api/send') {
