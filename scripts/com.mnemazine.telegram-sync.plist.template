@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Daily Mnemazine Telegram pull + protocol run.
-     Install: copy to ~/Library/LaunchAgents/com.mnemazine.telegram-sync.plist
-              (replace __REPO__ with your checkout path first)
-              launchctl load ~/Library/LaunchAgents/com.mnemazine.telegram-sync.plist
-     Runs daily at 09:00. If the Mac was asleep/off at 09:00, launchd fires it on
-     next wake — that's why the VPS buffers messages durably in the meantime. -->
+<!-- Mnemazine Telegram poller. Runs every 5 min: pulls + runs the protocol when
+     the mini app queued a run (.run-now) or the daily window is due.
+     Install: replace __REPO__ with your checkout path, then
+       cp scripts/com.mnemazine.telegram-sync.plist.template \
+          ~/Library/LaunchAgents/com.mnemazine.telegram-sync.plist
+       launchctl load ~/Library/LaunchAgents/com.mnemazine.telegram-sync.plist -->
 <plist version="1.0">
 <dict>
   <key>Label</key>
@@ -12,13 +12,10 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>__REPO__/scripts/mnemazine-telegram-sync.sh</string>
+    <string>__REPO__/scripts/mnemazine-telegram-poll.sh</string>
   </array>
-  <key>StartCalendarInterval</key>
-  <dict>
-    <key>Hour</key><integer>9</integer>
-    <key>Minute</key><integer>0</integer>
-  </dict>
+  <key>StartInterval</key>
+  <integer>300</integer>
   <key>StandardOutPath</key>
   <string>__REPO__/.mnemazine/telegram-sync.log</string>
   <key>StandardErrorPath</key>

@@ -19,4 +19,4 @@ rsync -avz --remove-source-files --exclude '.*' \
   "$VPS:$REMOTE_INBOX" "$LOCAL_INBOX"
 
 cd "$REPO"
-exec npm run run
+npm run run
