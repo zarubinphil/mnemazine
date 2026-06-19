@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mnemazine Telegram poller. Runs every 5 min: pulls + runs the protocol when
+     the mini app queued a run (.run-now) or the daily window is due.
+     Install: replace __REPO__ with your checkout path, then
+       cp scripts/com.mnemazine.telegram-sync.plist.template \
+          ~/Library/LaunchAgents/com.mnemazine.telegram-sync.plist
+       launchctl load ~/Library/LaunchAgents/com.mnemazine.telegram-sync.plist -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.mnemazine.telegram-sync</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__REPO__/scripts/mnemazine-telegram-poll.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>300</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>__REPO__/.mnemazine/telegram-sync.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPO__/.mnemazine/telegram-sync.err.log</string>
+</dict>
+</plist>
