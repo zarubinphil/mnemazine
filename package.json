@@ -6,6 +6,8 @@
   "description": "Local-first memory system for turning raw inputs into verified reusable knowledge / Локальная система памяти из сырья в проверяемые знания.",
   "scripts": {
     "install:local": "bash install.sh",
+    "start": "bash scripts/mnemazine-desktop-protocol.sh",
+    "desktop": "bash scripts/mnemazine-desktop-protocol.sh",
     "run": "node scripts/mnemazine-run.mjs",
     "protocol:desktop": "bash scripts/mnemazine-desktop-protocol.sh",
     "graph:refresh": "node scripts/mnemazine-refresh-graphify.mjs --json",

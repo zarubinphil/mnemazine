@@ -9,6 +9,16 @@ Mnemazine is a knowledge refinery skill.
 
 Use it when the user gives raw material and wants it preserved as durable knowledge, not as a dump.
 
+## Chat Shortcut
+
+If the user says `Mnemazine inbox`, `Мнемозина, inbox`, or `запусти Мнемозину`, run:
+
+```bash
+npm start
+```
+
+For live inbox work, do not use `npm run run`. `npm start` runs the strict desktop protocol and fails before archive if deep atomization/enrichment did not happen.
+
 ## Contract
 
 The vault stores final knowledge only.

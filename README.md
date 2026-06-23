@@ -97,7 +97,7 @@ Everything lives under `~/Desktop/Mnemazine` by default:
 
 The installer checks what exists and installs what it can safely install locally. It does not require private credentials.
 
-## One-Command Local Run
+## One-Command Run
 
 Put files into:
 
@@ -108,7 +108,13 @@ Put files into:
 Then run:
 
 ```bash
-node scripts/mnemazine-run.mjs
+npm start
+```
+
+Agent shortcut:
+
+```text
+Mnemazine inbox
 ```
 
 The run performs:
@@ -116,16 +122,17 @@ The run performs:
 1. file census;
 2. SHA-256 duplicate detection;
 3. local extraction when possible;
-4. final note creation with `source_ref` and `source_hash`;
-5. vault quality gate;
-6. archive move only after the quality gate passes;
-7. guarded Graphify refresh attempt;
-8. weekly HTML report regeneration;
-9. report quality gate for the regenerated weekly HTML;
-10. action brief at `.mnemazine/state/last-action-brief.md`;
-11. visual post-run knowledge report in `reports/`.
+4. deep atomization and source expansion;
+5. final note creation with `source_ref` and `source_hash`;
+6. vault quality gate;
+7. archive move only after atomization/enrichment and quality gates pass;
+8. guarded Graphify refresh attempt;
+9. weekly HTML report regeneration;
+10. report quality gate for the regenerated weekly HTML;
+11. action brief at `.mnemazine/state/last-action-brief.md`;
+12. visual post-run knowledge report in `reports/`.
 
-The default runner is intentionally conservative. It does not publish data, use private cookies, or send local files to external services. It writes local notes and archives processed source files under `.mnemazine/archive/`.
+`npm start` is the safe default for real inbox work. The lower-level `npm run run` command is for development and demos.
 
 ## Website Ingestion
 
