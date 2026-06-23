@@ -6,9 +6,17 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: release-check-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   release-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,5 +25,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Show runtime versions
+        run: |
+          node --version
+          npm --version
+          python3 --version
+      - name: Run post-run report smoke
+        run: npm run postrun -- --run-id ci-postrun --since-days 30 --quiet
       - name: Run release gate (syntax, demo smoke, public scan, bilingual README parity)
         run: npm run release-check
