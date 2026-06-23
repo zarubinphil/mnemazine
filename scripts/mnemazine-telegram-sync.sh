@@ -13,11 +13,12 @@ REPO="${MNEMAZINE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 VPS="${MNEMAZINE_VPS:-root@YOUR_VPS_HOST}"
 KEY="${MNEMAZINE_VPS_KEY:-$HOME/.ssh/id_rsa}"
 REMOTE_INBOX="${MNEMAZINE_REMOTE_INBOX:-/var/www/mnemazine-inbox/}"
+REMOTE_INBOX="${REMOTE_INBOX%/}/"
 # Inbox honours MNEMAZINE_INBOX (from config.env); defaults to repo-local inbox.
 LOCAL_INBOX="${MNEMAZINE_INBOX:-$REPO/inbox}"
 LOCAL_INBOX="${LOCAL_INBOX%/}/"
 STAGING="${LOCAL_INBOX}.staging/"
-# Export so `npm run run` (mnemazine-run.mjs) reads the same inbox.
+# Export so the protocol runner reads the same inbox.
 export MNEMAZINE_INBOX="${LOCAL_INBOX%/}"
 
 if [ "$VPS" = "root@YOUR_VPS_HOST" ]; then
@@ -47,7 +48,7 @@ shopt -u dotglob nullglob
 
 # 3) run the protocol; only AFTER it succeeds delete the taken files on the VPS.
 cd "$REPO"
-if npm run run; then
+if npm run protocol:desktop; then
   if [ "${#pulled[@]}" -gt 0 ]; then
     printf '%s\n' "${pulled[@]}" | $SSH_E "$VPS" "cd ${REMOTE_INBOX%/} && xargs -d '\n' -r rm -f --"
   fi

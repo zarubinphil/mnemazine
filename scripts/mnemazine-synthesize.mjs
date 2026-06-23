@@ -367,7 +367,7 @@ async function atomizeCluster(cluster, sources, materialOverride) {
 const ENRICH_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['enriched', 'sources'],
+  required: ['enriched', 'sources', 'added_facts'],
   properties: {
     enriched: { type: 'string' },
     sources: { type: 'array', items: { type: 'string' } },

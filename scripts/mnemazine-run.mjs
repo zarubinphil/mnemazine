@@ -10,6 +10,7 @@ const ROOT = process.env.MNEMAZINE_ROOT || path.resolve(process.cwd())
 const INBOX = process.env.MNEMAZINE_INBOX || path.join(ROOT, 'inbox')
 const VAULT = process.env.MNEMAZINE_VAULT || path.join(ROOT, 'vault')
 const REPORTS = process.env.MNEMAZINE_REPORTS || path.join(ROOT, 'reports')
+const STATE = process.env.MNEMAZINE_STATE || path.join(ROOT, '.mnemazine/state')
 const CACHE = process.env.MNEMAZINE_CACHE || path.join(ROOT, '.mnemazine/cache/processed-hashes.json')
 const ARCHIVE = process.env.MNEMAZINE_ARCHIVE || path.join(ROOT, '.mnemazine/archive')
 const TRANSCRIPTS = path.join(ROOT, '.mnemazine/cache/video-transcripts')
@@ -23,6 +24,8 @@ const FINISH = process.env.MNEMAZINE_FINISH !== '0'
 // Default OFF: the runner stays conservative — local only, no external calls.
 // Enable with `--deep` or MNEMAZINE_DEEP=1; forwarded to synthesize.
 const DEEP = process.argv.includes('--deep') || process.env.MNEMAZINE_DEEP === '1'
+const REQUIRE_DEEP = process.argv.includes('--require-deep') || process.env.MNEMAZINE_REQUIRE_DEEP === '1'
+const ENRICH_REQUIRED = DEEP && process.env.MNEMAZINE_ENRICH !== '0' && !process.argv.includes('--no-enrich')
 const WHISPER_MODEL = process.env.MNEMAZINE_WHISPER_MODEL || ''
 const WHISPER_LANGUAGE = process.env.MNEMAZINE_WHISPER_LANGUAGE || 'ru'
 const VIDEO_FRAME_LIMIT = Number(process.env.MNEMAZINE_VIDEO_FRAME_LIMIT || '8')
@@ -305,6 +308,31 @@ function runLocalNodeScript(script, args = []) {
   }
 }
 
+function parseJsonOutput(text) {
+  const raw = String(text || '').trim()
+  if (!raw) return null
+  const start = raw.indexOf('{')
+  const end = raw.lastIndexOf('}')
+  if (start === -1 || end < start) return null
+  try { return JSON.parse(raw.slice(start, end + 1)) } catch { return null }
+}
+
+async function writeRunState(state) {
+  await ensureDir(STATE)
+  await fs.writeFile(path.join(STATE, 'last-run.json'), `${JSON.stringify(state, null, 2)}\n`, 'utf8')
+}
+
+function validateDeepRun({ synthesize, processed }) {
+  const failures = []
+  if (!DEEP) failures.push('deep mode was required but run did not use --deep')
+  if (processed <= 0) return failures
+  if (!synthesize || synthesize.skipped) failures.push('deep synthesis did not run')
+  if (synthesize?.degraded) failures.push('deep synthesis degraded to local template')
+  if (processed > 0 && Number(synthesize?.atomized || 0) <= 0) failures.push('deep synthesis produced zero atoms')
+  if (processed > 0 && ENRICH_REQUIRED && Number(synthesize?.enriched || 0) <= 0) failures.push('deep enrichment produced zero enriched clusters')
+  return failures
+}
+
 async function recentNotes(limit = 8) {
   const notes = []
   async function walk(dir) {
@@ -326,7 +354,7 @@ async function recentNotes(limit = 8) {
 }
 
 async function writeActionBrief(finishResult) {
-  const dir = path.join(ROOT, '.mnemazine/state')
+  const dir = STATE
   await ensureDir(dir)
   const notes = await recentNotes()
   const lines = [
@@ -423,16 +451,34 @@ async function main() {
     }
   }
   await fs.writeFile(CACHE, JSON.stringify(cache, null, 2), 'utf8')
-  if (SYNTHESIZE) {
+  let synthesize = { skipped: true, reason: processed > 0 ? 'disabled' : 'no newly extracted sources' }
+  if (SYNTHESIZE && processed > 0) {
     // Stages: extraction+understanding already done above; synthesize runs
     // research/verification/atomization (deep) and writes vault atoms.
     const synthArgs = [path.join(ROOT, 'scripts/mnemazine-synthesize.mjs')]
     if (DEEP) synthArgs.push('--deep')
-    const synth = spawnSync(process.execPath, synthArgs, { stdio: 'inherit', env: process.env })
-    if (synth.status !== 0) process.exit(synth.status || 1)
+    const synth = spawnSync(process.execPath, synthArgs, { encoding: 'utf8', env: process.env })
+    if (synth.stdout) process.stdout.write(synth.stdout)
+    if (synth.stderr) process.stderr.write(synth.stderr)
+    synthesize = parseJsonOutput(synth.stdout) || { ok: synth.status === 0, parse_error: true }
+    if (synth.status !== 0) {
+      await writeRunState({ ok: false, failure: 'synthesize failed', inbox: entries.length, processed, cached_only: cachedOnly, failed, deep: DEEP, deep_required: REQUIRE_DEEP, enrich_required: ENRICH_REQUIRED, synthesize, vault: VAULT, finished_at: new Date().toISOString() })
+      process.exit(synth.status || 1)
+    }
+  }
+  if (REQUIRE_DEEP) {
+    const deepFailures = validateDeepRun({ synthesize, processed })
+    if (deepFailures.length) {
+      await writeRunState({ ok: false, failures: deepFailures, inbox: entries.length, processed, cached_only: cachedOnly, failed, deep: DEEP, deep_required: REQUIRE_DEEP, enrich_required: ENRICH_REQUIRED, synthesize, vault: VAULT, finished_at: new Date().toISOString() })
+      console.error(JSON.stringify({ ok: false, failures: deepFailures, synthesize }, null, 2))
+      process.exit(1)
+    }
   }
   const quality = spawnSync(process.execPath, [path.join(ROOT, 'scripts/mnemazine-vault-quality-gate.mjs')], { stdio: 'inherit', env: process.env })
-  if (quality.status !== 0) process.exit(quality.status || 1)
+  if (quality.status !== 0) {
+    await writeRunState({ ok: false, failure: 'vault quality failed', inbox: entries.length, processed, cached_only: cachedOnly, failed, deep: DEEP, deep_required: REQUIRE_DEEP, enrich_required: ENRICH_REQUIRED, synthesize, vault: VAULT, finished_at: new Date().toISOString() })
+    process.exit(quality.status || 1)
+  }
   const archived = []
   for (const item of toArchive) archived.push(await archiveFile(item.file, item.hash))
   // Deep + final stage: Russian humanizer digest, AFTER the graph so connections
@@ -441,7 +487,9 @@ async function main() {
     spawnSync(process.execPath, [path.join(ROOT, 'scripts/mnemazine-digest.mjs')], { stdio: 'inherit', env: process.env })
   }
   const finish = FINISH ? await finishRun() : { skipped: true }
-  console.log(JSON.stringify({ inbox: entries.length, processed, cached_only: cachedOnly, failed, archived: archived.length, deep: DEEP, finish, vault: VAULT }, null, 2))
+  const result = { ok: true, inbox: entries.length, processed, cached_only: cachedOnly, failed, archived: archived.length, deep: DEEP, deep_required: REQUIRE_DEEP, enrich_required: ENRICH_REQUIRED, synthesize, finish, vault: VAULT, finished_at: new Date().toISOString() }
+  await writeRunState(result)
+  console.log(JSON.stringify(result, null, 2))
 }
 
 main().catch(err => {

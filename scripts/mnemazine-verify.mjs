@@ -17,7 +17,7 @@ export function verifyLocal(urls = []) {
 const VERIFY_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['status', 'evidence'],
+  required: ['status', 'evidence', 'checked'],
   properties: {
     status: { type: 'string', enum: ['verified', 'assumed', 'unknown'] },
     evidence: { type: 'string' },

@@ -10,6 +10,9 @@ Deep-режим **выключен, пока вы его не попросите
 ## Включение deep-режима
 
 ```bash
+# рабочий запуск Desktop Inbox, строгий полный протокол:
+npm run protocol:desktop
+
 # весь прогон, deep:
 node scripts/mnemazine-run.mjs --deep
 # или через env (форвардится в synthesize):
@@ -19,7 +22,9 @@ MNEMAZINE_DEEP=1 node scripts/mnemazine-run.mjs
 npm run synthesize -- --deep
 ```
 
-Если deep-режим запрошен, но движок LLM недоступен, прогон **откатывается на локальный шаблонный синтез** и сообщает `degraded: true` в JSON-выводе. Молча не падает.
+Для рабочего Desktop Inbox используй `npm run protocol:desktop`. Он сам читает `.mnemazine/config.local.sh`, берёт inbox с рабочего стола, пишет в `~/Мозг`, включает `--deep`, требует атомизацию + обогащение и после этого запускает `complete-check`.
+
+Если deep-режим запрошен напрямую, но движок LLM недоступен, обычный `node scripts/mnemazine-run.mjs --deep` откатывается на локальный шаблонный синтез и сообщает `degraded: true` в JSON-выводе. Строгий запуск (`--require-deep` или `npm run protocol:desktop`) в такой ситуации падает до архива.
 
 ## Мост LLM
 

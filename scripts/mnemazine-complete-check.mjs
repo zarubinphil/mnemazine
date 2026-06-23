@@ -19,6 +19,7 @@ function arg(name, fallback = '') {
 
 const NEEDS_UPDATE_MAX_DAYS = Number(arg('needs-update-max-days', process.env.MNEMAZINE_NEEDS_UPDATE_MAX_DAYS || '1'))
 const STRICT_GRAPH = argv.includes('--strict-graph')
+const REQUIRE_DEEP = argv.includes('--require-deep') || process.env.MNEMAZINE_REQUIRE_DEEP === '1'
 
 function run(command, args) {
   return new Promise(resolve => {
@@ -56,10 +57,35 @@ async function latestReport() {
   return reports.sort((a, b) => b.mtimeMs - a.mtimeMs)[0]?.file || ''
 }
 
+async function activeInboxFiles() {
+  return (await fs.readdir(INBOX, { withFileTypes: true }).catch(() => []))
+    .filter(item => item.isFile() && !item.name.startsWith('.'))
+    .map(item => item.name)
+}
+
+async function readJson(file, fallback = null) {
+  try { return JSON.parse(await fs.readFile(file, 'utf8')) } catch { return fallback }
+}
+
+function deepFailures(lastRun) {
+  const failures = []
+  if (!lastRun) return ['last run state missing']
+  if (!lastRun.ok) failures.push(`last run failed: ${(lastRun.failures || [lastRun.failure || 'unknown']).join('; ')}`)
+  if (!lastRun.deep) failures.push('last run was not deep')
+  if (!lastRun.synthesize || lastRun.synthesize.skipped) {
+    if (Number(lastRun.processed || 0) > 0) failures.push('deep synthesis did not run')
+    return failures
+  }
+  if (lastRun.synthesize.degraded) failures.push('deep synthesis degraded to local template')
+  if (Number(lastRun.processed || 0) > 0 && Number(lastRun.synthesize.atomized || 0) <= 0) failures.push('deep synthesis produced zero atoms')
+  if (Number(lastRun.processed || 0) > 0 && lastRun.enrich_required && Number(lastRun.synthesize.enriched || 0) <= 0) failures.push('deep enrichment produced zero enriched clusters')
+  return failures
+}
+
 async function main() {
   const failures = []
   const warnings = []
-  const inboxFiles = (await fs.readdir(INBOX).catch(() => [])).filter(name => !name.startsWith('.'))
+  const inboxFiles = await activeInboxFiles()
   if (inboxFiles.length) failures.push(`inbox not empty: ${inboxFiles.length}`)
 
   const quality = await run(process.execPath, ['scripts/mnemazine-vault-quality-gate.mjs'])
@@ -88,11 +114,26 @@ async function main() {
     else warnings.push(msg)
   }
 
+  const lastRunFile = path.join(STATE, 'last-run.json')
+  const lastRun = await readJson(lastRunFile)
+  if (REQUIRE_DEEP) {
+    for (const failure of deepFailures(lastRun)) failures.push(failure)
+  }
+
   const result = {
     ok: failures.length === 0,
     failures,
     warnings,
     inbox: inboxFiles.length,
+    deep_required: REQUIRE_DEEP,
+    last_run: lastRun ? {
+      ok: lastRun.ok,
+      deep: lastRun.deep,
+      processed: lastRun.processed,
+      atomized: lastRun.synthesize?.atomized ?? null,
+      enriched: lastRun.synthesize?.enriched ?? null,
+      finished_at: lastRun.finished_at || null
+    } : null,
     report: report ? path.relative(ROOT, report) : null,
     brief: existsSync(brief) ? path.relative(ROOT, brief) : null
   }

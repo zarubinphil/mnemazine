@@ -7,6 +7,7 @@
   "scripts": {
     "install:local": "bash install.sh",
     "run": "node scripts/mnemazine-run.mjs",
+    "protocol:desktop": "bash scripts/mnemazine-desktop-protocol.sh",
     "graph:refresh": "node scripts/mnemazine-refresh-graphify.mjs --json",
     "graph:shards": "node scripts/mnemazine-semantic-shards.mjs",
     "graph:semantic-batches": "node scripts/mnemazine-semantic-batches.mjs",
