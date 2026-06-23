@@ -62,6 +62,7 @@ async function checkSyntax() {
     'scripts/mnemazine-verify.mjs',
     'scripts/mnemazine-weekly-brief-html.mjs',
     'scripts/mnemazine-weekly-state.mjs',
+    'scripts/mnemazine-postrun-knowledge-report.mjs',
     'scripts/mnemazine-digest.mjs',
     'scripts/mnemazine-report-quality-gate.mjs',
     'scripts/mnemazine-complete-check.mjs',

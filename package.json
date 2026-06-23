@@ -19,6 +19,7 @@
     "search": "node scripts/mnemazine-kb-search.mjs",
     "search:eval": "node tests/search-eval.mjs",
     "weekly": "node scripts/mnemazine-weekly-brief-html.mjs",
+    "postrun": "node scripts/mnemazine-postrun-knowledge-report.mjs",
     "weekly:state": "node scripts/mnemazine-weekly-state.mjs",
     "digest": "node scripts/mnemazine-digest.mjs",
     "quality": "node scripts/mnemazine-vault-quality-gate.mjs",

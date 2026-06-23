@@ -26,6 +26,7 @@ Do not write raw OCR, copied fragments, noisy transcripts, or unverified paste d
 7. Run the vault quality gate.
 8. Update Graphify when available.
 9. Produce a short action brief when the new knowledge implies work.
+10. Produce a visual post-run knowledge report with clusters, atoms, duplicates, and top-20 actions.
 
 YouTube channels can be auto-harvested into the inbox as transcript notes (`docs/youtube-ingestion.md`); they then flow through this same workflow.
 
@@ -33,13 +34,27 @@ YouTube channels can be auto-harvested into the inbox as transcript notes (`docs
 
 Every durable note should contain:
 
+- Russian title when the user's working language is Russian;
 - `What This Is`;
 - `Why It Matters`;
 - `How To Use It`;
 - `Source`;
 - `Verification`;
+- `Atomization` when the source contains several ideas;
 - `Related Notes`;
 - `Reuse`.
+
+Use `source_ref` and `source_hash` for local files. Do not expose raw private filenames when a stable local-media reference is enough.
+
+## Agent Parity
+
+Claude Code and Codex must use the same knowledge contract:
+
+- same scripts;
+- same gates;
+- same note shape;
+- same post-run visual report;
+- same public-safe agent role passports.
 
 ## Local Paths
 

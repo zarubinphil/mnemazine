@@ -32,6 +32,7 @@ It does not save raw OCR into your vault. It does not keep vague summaries that 
 - reusable skill descriptions, agent instructions, implementation notes, and project actions;
 - Graphify maps for semantic navigation;
 - weekly HTML briefings with local state: `read`, `work on it`, `forget`.
+- post-run visual knowledge reports: clusters, small atoms, duplicate accounting, and top-20 recommended actions.
 
 The goal is simple: future you should not reread twenty screenshots, a whole guide, or a messy transcript. Future you should open one good note and immediately understand what the knowledge is, why it matters, how to use it, and what evidence supports it.
 
@@ -121,7 +122,8 @@ The run performs:
 7. guarded Graphify refresh attempt;
 8. weekly HTML report regeneration;
 9. report quality gate for the regenerated weekly HTML;
-10. action brief at `.mnemazine/state/last-action-brief.md`.
+10. action brief at `.mnemazine/state/last-action-brief.md`;
+11. visual post-run knowledge report in `reports/`.
 
 The default runner is intentionally conservative. It does not publish data, use private cookies, or send local files to external services. It writes local notes and archives processed source files under `.mnemazine/archive/`.
 
@@ -180,6 +182,23 @@ Run the gate manually:
 node scripts/mnemazine-vault-quality-gate.mjs
 ```
 
+## Post-Run Knowledge Report
+
+Every finished run can produce a light visual report in Markdown and HTML:
+
+```bash
+npm run postrun
+```
+
+The report is built for review, not raw logging. It shows:
+
+- what useful knowledge appeared in the vault;
+- how notes collapse into clusters and small reusable atoms;
+- which duplicates were counted without creating junk notes;
+- top-20 recommended actions after the batch.
+
+When no explicit run JSON or logs are passed, the report reads recent vault notes. For exact pipeline runs, pass `--results-json` or `--logs`.
+
 ## Agent Skills
 
 The repo includes portable Agent Skills in `.agents/skills` style:
@@ -194,6 +213,18 @@ The installer can copy them into common agent locations when those tools exist:
 - project `.agents/skills`.
 
 The skills are public-safe: no personal paths, no private repositories, no account names, no secrets.
+
+## Claude And Codex Parity
+
+Mnemazine is designed so Claude Code and Codex run the same knowledge contract:
+
+- same public scripts in `scripts/`;
+- same agent role descriptions in `agents/kb-pipeline/`;
+- same `source_ref` / `source_hash` discipline;
+- same quality gate before archive;
+- same post-run visual report after each full pass.
+
+Agent personalities are part of the workflow, not decoration. They are stored as public-safe role passports so both agents preserve the same responsibilities and tone while avoiding private data.
 
 ## Graphify
 

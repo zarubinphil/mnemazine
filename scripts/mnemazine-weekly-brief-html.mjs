@@ -39,6 +39,9 @@ function actionOf(text) {
 function linksOf(text) {
   return [...new Set(String(text).match(/\bhttps?:\/\/[^\s)]+/g) || [])]
     .map(url => url.replace(/[.,;]+$/, ''))
+    .filter(url => {
+      try { new URL(url); return true } catch { return false }
+    })
     .slice(0, 4)
 }
 

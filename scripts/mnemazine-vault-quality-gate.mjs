@@ -13,6 +13,7 @@ function arg(name, fallback = '') {
 }
 
 const VAULT = path.resolve(arg('vault', process.env.MNEMAZINE_VAULT || path.join(ROOT, 'vault')))
+const REQUIRE_DOSSIER = argv.includes('--require-dossier')
 
 const badMarkers = [
   /raw\s+ocr/i,
@@ -66,9 +67,19 @@ for (const file of files) {
   if (/^##\s+Атомизировано(?:\s|$)/m.test(text)) continue
   const hit = badMarkers.find(re => re.test(text))
   const hasSource = /#{2,}\s+(Source|Sources|Источник|Источники|Источники и подтверждения)(?:\s|$)|source:/i.test(text)
-  const hasMeaning = /#{2,}\s+(What This Is|Что это|Что это и зачем|Суть)(?:\s|$)/i.test(text)
-  if (hit || !hasSource || !hasMeaning) {
-    failures.push({ file: rel, marker: hit ? String(hit) : 'missing required sections' })
+  const hasMeaning = /#{2,}\s+(What This Is|Что это|Что это и зачем|Суть|Полное объяснение)(?:\s|$)/i.test(text)
+  const missingDossier = REQUIRE_DOSSIER
+    ? [
+        ['Короткий ответ', /^##\s+Короткий ответ(?:\s|$)/m],
+        ['Полное объяснение', /^##\s+Полное объяснение(?:\s|$)/m],
+        ['Как использовать', /^##\s+Как использовать(?:\s|$)/m],
+        ['Ошибки и ограничения', /^##\s+Ошибки и ограничения(?:\s|$)/m],
+        ['Достоверность', /^##\s+Достоверность(?:\s|$)/m],
+        ['Атомизация', /^##\s+Атомизация(?:\s|$)/m],
+      ].filter(([, re]) => !re.test(text)).map(([name]) => name)
+    : []
+  if (hit || !hasSource || !hasMeaning || missingDossier.length) {
+    failures.push({ file: rel, marker: hit ? String(hit) : missingDossier.length ? `missing dossier sections: ${missingDossier.join(', ')}` : 'missing required sections' })
   }
 }
 

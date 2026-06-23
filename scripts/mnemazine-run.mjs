@@ -362,6 +362,7 @@ async function finishRun() {
     ? runLocalNodeScript('mnemazine-report-quality-gate.mjs', ['--report', weeklyReport])
     : { skipped: true, reason: 'weekly report path missing' }
   result.brief = await writeActionBrief(result)
+  result.visual_report = runLocalNodeScript('mnemazine-postrun-knowledge-report.mjs', ['--run-id', `local-${new Date().toISOString().slice(0, 10)}`, '--since-days', '14'])
   return result
 }
 
